@@ -18,7 +18,7 @@ async function start() {
     // Cargar spritesheet del jugador
     await new Promise((resolve) => {
         const img = new Image();
-        img.src = "/img/character-spritesheet.png";
+        img.src = "./img/character-spritesheet.png";
         img.onload = async () => {
             const exactRows = img.height / 64;
             await k.loadSprite("player", img.src, {
@@ -76,9 +76,9 @@ async function start() {
     };
 
     const [catGris, catNaranja, catBlanco] = await Promise.all([
-        loadImage("/img/Free pack/cat 1.png"),
-        loadImage("/img/Free pack/cat 1.6.png"),
-        loadImage("/img/Free pack/cat 1.9.png"),
+        loadImage("./img/Free pack/cat 1.png"),
+        loadImage("./img/Free pack/cat 1.6.png"),
+        loadImage("./img/Free pack/cat 1.9.png"),
     ]);
 
     await Promise.all([
@@ -88,7 +88,7 @@ async function start() {
     ]);
 
     // Snoopy con lentes (imagen recortada, ya con fondo transparente)
-    await k.loadSprite("snoopy_cool", "/sprites/snoopy_lentes.png");
+    await k.loadSprite("snoopy_cool", "./sprites/snoopy_lentes.png");
 
     await new Promise((resolve) => {
         const c = document.createElement("canvas");

@@ -1,4 +1,5 @@
 import { k } from "../kaplayCtx.js";
+import { initAudio, playMusic } from "../utils/audio.js";
 import { setupMobileControls } from "../ui/mobileControls.js";
 
 k.scene("device_select", () => {
@@ -13,6 +14,19 @@ k.scene("device_select", () => {
         k.anchor("center"),
         k.color(240, 235, 215)
     ]);
+
+    const startGame = (isMobile) => {
+        try {
+            initAudio();
+        } catch (error) {
+            console.warn("No se pudo desbloquear el audio al iniciar:", error);
+        }
+
+        window.isMobileMode = isMobile;
+        setupMobileControls();
+        playMusic("dulce_soledad");
+        k.go("house");
+    };
 
     const createBtn = (y, textStr, isMobile) => {
         const btn = k.add([
@@ -32,22 +46,15 @@ k.scene("device_select", () => {
         btn.onHover(() => btn.color = k.rgb(60, 60, 70));
         btn.onHoverEnd(() => btn.color = k.rgb(40, 40, 50));
 
-        btn.onClick(() => {
-            window.isMobileMode = isMobile;
-            setupMobileControls();
-            k.go("house");
-        });
-        
-        // Soporte touch estricto
+        btn.onClick(() => startGame(isMobile));
+
         btn.onTouchStart((id, pos) => {
             if (btn.hasPoint(pos)) {
-                window.isMobileMode = isMobile;
-                setupMobileControls();
-                k.go("house");
+                startGame(isMobile);
             }
         });
     };
 
     createBtn(centerY, "💻 Jugar en Computadora", false);
-    createBtn(centerY + 60, "📱 Jugar en Teléfono / Tablet", true);
+    createBtn(centerY + 60, "📱 Jugar en Celular", true);
 });

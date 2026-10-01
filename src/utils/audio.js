@@ -1,6 +1,25 @@
 import { k } from "../kaplayCtx.js";
 
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let audioCtx = null;
+
+export function initAudio() {
+    try {
+        if (!audioCtx) {
+            const AudioCtor = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtor) return null;
+            audioCtx = new AudioCtor();
+        }
+
+        if (audioCtx.state === "suspended") {
+            audioCtx.resume().catch(() => {});
+        }
+
+        return audioCtx;
+    } catch (error) {
+        console.warn("No se pudo inicializar el AudioContext:", error);
+        return null;
+    }
+}
 
 // Frecuencias base para las notas (Octava 4)
 const notes = {
@@ -13,7 +32,6 @@ const notes = {
 
 // Tracks (melodías)
 const tracks = {
-    // "Dulce Soledad" - Melancólica y melódica
     music_main: {
         name: "Dulce Soledad",
         tempo: 100,
@@ -23,7 +41,6 @@ const tracks = {
             { n: 'A4', d: 2 }, { n: 'G4', d: 2 }, { n: 'F4', d: 2 }, { n: 'E4', d: 2 }
         ]
     },
-    // "Elemento" - Suave
     music_minigame_1: {
         name: "Elemento",
         tempo: 90,
@@ -34,7 +51,6 @@ const tracks = {
             { n: 'C4', d: 4 }
         ]
     },
-    // "Visita" - Más activa
     music_minigame_2: {
         name: "Visita",
         tempo: 140,
@@ -45,7 +61,6 @@ const tracks = {
             { n: 'E4', d: 4 }
         ]
     },
-    // "Cámara de Faltas" - Compás constante
     music_minigame_3: {
         name: "Cámara de Faltas",
         tempo: 110,
@@ -56,7 +71,6 @@ const tracks = {
             { n: 'C5', d: 1.5 }, { n: 'B4', d: 0.5 }, { n: 'A4', d: 2 }
         ]
     },
-    // "Vida en el Espejo" - Cierre emotivo
     music_credits: {
         name: "Vida en el Espejo",
         tempo: 80,
@@ -74,27 +88,26 @@ let isPlaying = false;
 let currentTimeout = null;
 
 function playNote(freq, duration) {
-    if (!freq) return; // Silencio
+    const ctx = initAudio();
+    if (!ctx || !freq) return;
 
-    const osc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
 
-    osc.type = 'triangle'; // Tono suave de marimba
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
 
-    // Envolvente de volumen (Attack rápido, Decay moderado, Sustain nulo)
-    gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.02); // Attack
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration); // Decay
+    gainNode.gain.setValueAtTime(0, ctx.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.02);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
 
     osc.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
+    gainNode.connect(ctx.destination);
 
     osc.start();
-    osc.stop(audioCtx.currentTime + duration);
+    osc.stop(ctx.currentTime + duration);
 
     currentOscillators.push(osc);
-    // Limpiar de la lista al terminar
     osc.onended = () => {
         currentOscillators = currentOscillators.filter(o => o !== osc);
     };
@@ -119,7 +132,6 @@ function showTrackNotification(songTitle) {
         k.z(990)
     ]);
 
-    // Fondo pastilla
     currentTrackWidget.add([
         k.rect(boxWidth, boxHeight, { radius: 5 }),
         k.color(22, 22, 28),
@@ -127,7 +139,6 @@ function showTrackNotification(songTitle) {
         k.anchor("topright")
     ]);
 
-    // Texto de la canción
     currentTrackWidget.add([
         k.text(`♪ Enjambre - ${songTitle}`, {
             size: 9,
@@ -175,8 +186,10 @@ function loopTrack() {
 let currentTrackName = null;
 
 export function playBGM(trackName) {
+    if (!trackName) return;
+
     if (currentTrackName === trackName && isPlaying) {
-        return; // No reiniciar si ya está sonando la misma
+        return;
     }
 
     stopBGM();
@@ -191,26 +204,44 @@ export function playBGM(trackName) {
     currentIndex = 0;
 
     const startPlaying = () => {
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume().then(() => loopTrack());
+        const ctx = initAudio();
+        if (!ctx) return;
+
+        if (ctx.state === 'suspended') {
+            ctx.resume().then(() => loopTrack()).catch(() => loopTrack());
         } else {
             loopTrack();
         }
     };
 
-    if (audioCtx.state === 'suspended') {
+    const ctx = initAudio();
+    if (!ctx) return;
+
+    if (ctx.state === 'suspended') {
         const unlock = () => {
-            audioCtx.resume().then(() => {
+            ctx.resume().then(() => {
+                if (isPlaying) loopTrack();
+            }).catch(() => {
                 if (isPlaying) loopTrack();
             });
             window.removeEventListener('keydown', unlock);
             window.removeEventListener('mousedown', unlock);
+            window.removeEventListener('touchstart', unlock);
         };
-        window.addEventListener('keydown', unlock);
-        window.addEventListener('mousedown', unlock);
+        window.addEventListener('keydown', unlock, { once: true });
+        window.addEventListener('mousedown', unlock, { once: true });
+        window.addEventListener('touchstart', unlock, { once: true });
     } else {
         startPlaying();
     }
+}
+
+export function playMusic(trackKey) {
+    const aliases = {
+        dulce_soledad: 'music_main',
+        music_main: 'music_main',
+    };
+    return playBGM(aliases[trackKey] || trackKey);
 }
 
 export function stopBGM() {
@@ -219,7 +250,6 @@ export function stopBGM() {
         clearTimeout(currentTimeout);
         currentTimeout = null;
     }
-    // Detener osciladores activos de inmediato
     currentOscillators.forEach(osc => {
         try { osc.stop(); } catch (e) {}
     });
