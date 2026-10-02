@@ -68,7 +68,7 @@ k.scene("device_select", () => {
 
         btn.onClick(() => startGame(isMobile));
 
-        btn.onTouchStart((id, pos) => {
+        btn.onTouchStart((pos) => {
             if (btn.hasPoint(pos)) {
                 startGame(isMobile);
             }

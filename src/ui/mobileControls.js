@@ -80,14 +80,14 @@ export function setupMobileControls() {
 
         // Touch events explicitly
         let activeTouch = null;
-        btn.onTouchStart((id, pos) => {
+        btn.onTouchStart((pos, touch) => {
             if (btn.hasPoint(pos)) {
-                activeTouch = id;
+                activeTouch = touch.identifier;
                 press();
             }
         });
-        btn.onTouchEnd((id) => {
-            if (id === activeTouch) {
+        btn.onTouchEnd((pos, touch) => {
+            if (touch.identifier === activeTouch) {
                 activeTouch = null;
                 release();
             }
@@ -151,20 +151,20 @@ export function setupMobileControls() {
     };
 
     const joyEvents = [
-        k.onTouchStart((id, pos) => {
+        k.onTouchStart((pos, touch) => {
             if (joyTouch !== null || currentMobileControls.hidden) return;
-            if (pos.dist(k.vec2(baseX, baseY)) <= grabR) {
-                joyTouch = id;
+            if (Math.hypot(pos.x - baseX, pos.y - baseY) <= grabR) {
+                joyTouch = touch.identifier;
                 knob.opacity = 0.85;
                 joyBase.opacity = 0.5;
                 moveJoy(pos);
             }
         }),
-        k.onTouchMove((id, pos) => {
-            if (id === joyTouch) moveJoy(pos);
+        k.onTouchMove((pos, touch) => {
+            if (touch.identifier === joyTouch) moveJoy(pos);
         }),
-        k.onTouchEnd((id) => {
-            if (id === joyTouch) resetJoy();
+        k.onTouchEnd((pos, touch) => {
+            if (touch.identifier === joyTouch) resetJoy();
         })
     ];
     currentMobileControls.onDestroy(() => {
