@@ -79,11 +79,18 @@ export function setupMobileControls() {
         });
 
         // Touch events explicitly
+        let activeTouch = null;
         btn.onTouchStart((id, pos) => {
-            if (btn.hasPoint(pos)) press();
+            if (btn.hasPoint(pos)) {
+                activeTouch = id;
+                press();
+            }
         });
-        btn.onTouchEnd((id, pos) => {
-            release();
+        btn.onTouchEnd((id) => {
+            if (id === activeTouch) {
+                activeTouch = null;
+                release();
+            }
         });
 
         return btn;
@@ -93,20 +100,22 @@ export function setupMobileControls() {
     const dh = k.height();
 
     // D-Pad (Esquina inferior izquierda)
-    const padX = 60;
-    const padY = dh - 60;
-    
-    createBtn(padX, padY - 32, 28, 28, "up", "▲");
-    createBtn(padX, padY + 32, 28, 28, "down", "▼");
-    createBtn(padX - 32, padY, 28, 28, "left", "◄");
-    createBtn(padX + 32, padY, 28, 28, "right", "►");
+    const padX = 78;
+    const padY = dh - 78;
+    const step = 42;
+    const sz = 38;
+
+    createBtn(padX, padY - step, sz, sz, "up", "▲");
+    createBtn(padX, padY + step, sz, sz, "down", "▼");
+    createBtn(padX - step, padY, sz, sz, "left", "◄");
+    createBtn(padX + step, padY, sz, sz, "right", "►");
 
     // Botones de Acción (Esquina inferior derecha)
-    const actX = dw - 60;
-    const actY = dh - 60;
+    const actX = dw - 70;
+    const actY = dh - 70;
 
-    createBtn(actX, actY + 15, 20, 20, "e", "E", true);
-    createBtn(actX, actY - 25, 20, 20, "space", "ESP", true);
+    createBtn(actX, actY + 28, 26, 26, "e", "E", true);
+    createBtn(actX, actY - 28, 26, 26, "space", "ESP", true);
 
     // Permitir ocultar/mostrar programáticamente (útil en cinemáticas)
     currentMobileControls.onUpdate(() => {
