@@ -89,7 +89,8 @@ k.scene("minigame_space_invaders", async () => {
             k.pos(k.rand(0, k.width()), k.rand(0, k.height())),
             k.color(255, 255, 255),
             k.opacity(k.rand(0.3, 0.8)),
-            k.z(-10)
+            k.z(-10),
+            "bg_star"
         ]);
     }
 
@@ -117,7 +118,7 @@ k.scene("minigame_space_invaders", async () => {
         k.pos(k.width() / 2, k.height() - 36),
         k.anchor("center"),
         k.scale(2),
-        k.area({ shape: new k.Rect(k.vec2(0, 0), 16, 16) }),
+        k.area({ shape: new k.Rect(k.vec2(-8, -8), 16, 16) }),
         "player",
         { isInvulnerable: false }
     ]);
@@ -215,6 +216,19 @@ k.scene("minigame_space_invaders", async () => {
 
         // Limpiar destruidos del arreglo
         invadersGroup = invadersGroup.filter(i => i.exists());
+
+        // Si los invasores llegan hasta la nave, se pierde una vida y se reinicia la oleada
+        if (invadersGroup.some(i => i.pos.y > k.height() - 70)) {
+            lives--;
+            if (lives <= 0) lives = 3;
+            k.shake(4);
+            k.destroyAll("invader");
+            k.destroyAll("enemy_laser");
+            k.destroyAll("player_laser");
+            spawnWave();
+            updateUI();
+            return;
+        }
 
         // Si no quedan invasores, siguiente oleada o victoria
         if (invadersGroup.length === 0) {
@@ -392,7 +406,10 @@ k.scene("minigame_space_invaders", async () => {
             k.fixed()
         ]);
 
+        let canProceed = false;
+        k.wait(1, () => { canProceed = true; });
         const proceed = () => {
+            if (!canProceed) return;
             waitForSpace.cancel();
             if (waitForClick) waitForClick.cancel();
             import("../state/gameState.js").then(({ gameState }) => {

@@ -35,31 +35,19 @@ export function applyFadeIn() {
 }
 
 export function setupCamera(player, mapWidth, mapHeight) {
+    const halfW = k.width() / 2;
+    const halfH = k.height() / 2;
+
+    // Límites para que la cámara no salga del mapa (centrada fija si el mapa es menor que la pantalla)
+    const clampCam = (pos) => k.vec2(
+        mapWidth > k.width() ? Math.max(halfW, Math.min(pos.x, mapWidth - halfW)) : mapWidth / 2,
+        mapHeight > k.height() ? Math.max(halfH, Math.min(pos.y, mapHeight - halfH)) : mapHeight / 2
+    );
+
+    k.camPos(clampCam(player.pos));
+
     k.onUpdate(() => {
-        // Suavizado (lerp)
-        const camPos = k.camPos();
-        const targetPos = player.pos;
-        const newPos = camPos.lerp(targetPos, k.dt() * 4);
-        
-        // Clamping (límites para que la cámara no salga del mapa)
-        const halfW = k.width() / 2;
-        const halfH = k.height() / 2;
-        
-        let cx = newPos.x;
-        let cy = newPos.y;
-
-        if (mapWidth > k.width()) {
-            cx = Math.max(halfW, Math.min(cx, mapWidth - halfW));
-        } else {
-            cx = mapWidth / 2; // Centrar fijo si el mapa es más pequeño que la pantalla
-        }
-
-        if (mapHeight > k.height()) {
-            cy = Math.max(halfH, Math.min(cy, mapHeight - halfH));
-        } else {
-            cy = mapHeight / 2;
-        }
-        
-        k.camPos(cx, cy);
+        const smoothed = k.camPos().lerp(player.pos, Math.min(1, k.dt() * 4));
+        k.camPos(clampCam(smoothed));
     });
 }

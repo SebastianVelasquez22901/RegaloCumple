@@ -174,7 +174,7 @@ k.scene("minigame_traffic", async () => {
         k.pos(k.width() / 2, k.height() - 80),
         k.anchor("center"),
         k.scale(2),
-        k.area({ shape: new k.Rect(k.vec2(0, 0), 18, 32) }),
+        k.area({ shape: new k.Rect(k.vec2(-9, -16), 18, 32) }),
         k.z(50),
         "player"
     ]);
@@ -214,7 +214,7 @@ k.scene("minigame_traffic", async () => {
                 k.pos(laneX, -50),
                 k.anchor("center"),
                 k.scale(2),
-                k.area({ shape: new k.Rect(k.vec2(0, 0), isTruck ? 20 : 16, isTruck ? 40 : 30) }),
+                k.area({ shape: new k.Rect(isTruck ? k.vec2(-10, -20) : k.vec2(-8, -15), isTruck ? 20 : 16, isTruck ? 40 : 30) }),
                 k.move(k.DOWN, k.rand(100, 180)),
                 k.z(10),
                 "traffic"
@@ -302,7 +302,7 @@ k.scene("minigame_traffic", async () => {
     const triggerVictorySequence = () => {
         // Mazda orilla y sube suave
         k.tween(
-            player.pos,
+            player.pos.clone(),
             k.vec2(k.width()/2 + 80, k.height() / 2 + 50),
             2,
             (p) => player.pos = p,
@@ -392,7 +392,10 @@ k.scene("minigame_traffic", async () => {
             k.fixed()
         ]);
 
+        let canProceed = false;
+        k.wait(1, () => { canProceed = true; });
         const proceed = () => {
+            if (!canProceed) return;
             waitForSpace.cancel();
             if (waitForClick) waitForClick.cancel();
             import("../state/gameState.js").then(({ gameState }) => {

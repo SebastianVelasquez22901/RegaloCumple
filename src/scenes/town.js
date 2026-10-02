@@ -87,11 +87,11 @@ k.scene("town", (args = {}) => {
     ctx.beginPath(); ctx.arc(480, 520, 85, 0, Math.PI*2); ctx.fill();
 
     // Cargamos y pintamos el canvas de fondo generado on-the-fly
+    const sceneFloor = k.add([ k.rect(MAP_W, MAP_H), k.color(100, 180, 90), k.pos(0, 0), k.z(-1) ]);
     k.loadSprite("town_floor_cache", floorCanvas.toDataURL("image/png")).then(() => {
-        k.add([ k.sprite("town_floor_cache"), k.pos(0,0), k.z(0) ]);
+        if (sceneFloor.exists()) k.add([ k.sprite("town_floor_cache"), k.pos(0,0), k.z(0) ]);
     });
-    // Fallback de color mientras carga
-    k.add([ k.rect(MAP_W, MAP_H), k.color(100, 180, 90), k.pos(0, 0), k.z(-1) ]);
+    // (el rectángulo verde de arriba es el fallback mientras carga el suelo)
 
     // Limites de colisión
     k.add([k.rect(MAP_W, 16), k.pos(0, -16), k.area(), k.body({ isStatic: true })]);
@@ -357,7 +357,7 @@ k.scene("town", (args = {}) => {
             k.pos(g.pos),
             k.anchor("center"),
             k.scale(1),
-            k.z(10),
+            k.z(g.pos.y),
             k.area(),
             k.body({ isStatic: true }),
             "interactable_entity",

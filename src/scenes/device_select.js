@@ -15,7 +15,27 @@ k.scene("device_select", () => {
         k.color(240, 235, 215)
     ]);
 
+    let started = false;
+    const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+
+    const enterFullscreenLandscape = () => {
+        try {
+            const el = document.documentElement;
+            const p = el.requestFullscreen ? el.requestFullscreen() : null;
+            Promise.resolve(p)
+                .then(() => screen.orientation?.lock?.("landscape"))
+                .catch(() => {});
+        } catch (e) {}
+    };
+
     const startGame = (isMobile) => {
+        if (started) return;
+        started = true;
+        if (isMobile) {
+            // touchend cuenta como gesto de usuario válido para pantalla completa
+            window.addEventListener("touchend", enterFullscreenLandscape, { once: true });
+            enterFullscreenLandscape();
+        }
         try {
             initAudio();
         } catch (error) {
@@ -30,7 +50,7 @@ k.scene("device_select", () => {
 
     const createBtn = (y, textStr, isMobile) => {
         const btn = k.add([
-            k.rect(280, 40, { radius: 8 }),
+            k.rect(360, 40, { radius: 8 }),
             k.pos(centerX, y),
             k.anchor("center"),
             k.color(40, 40, 50),
@@ -55,6 +75,6 @@ k.scene("device_select", () => {
         });
     };
 
-    createBtn(centerY, "💻 Jugar en Computadora", false);
-    createBtn(centerY + 60, "📱 Jugar en Celular", true);
+    createBtn(centerY, `💻 Jugar en Computadora${isTouchDevice ? "" : " (recomendado)"}`, false);
+    createBtn(centerY + 60, `📱 Jugar en Celular${isTouchDevice ? " (recomendado)" : ""}`, true);
 });

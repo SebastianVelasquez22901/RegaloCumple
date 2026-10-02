@@ -168,6 +168,11 @@ function showTrackNotification(songTitle) {
     });
 }
 
+function startLoop() {
+    if (!isPlaying || currentTimeout) return;
+    loopTrack();
+}
+
 function loopTrack() {
     if (!isPlaying || !currentTrack) return;
 
@@ -180,7 +185,10 @@ function loopTrack() {
     }
 
     currentIndex = (currentIndex + 1) % currentTrack.melody.length;
-    currentTimeout = setTimeout(loopTrack, duration * 1000);
+    currentTimeout = setTimeout(() => {
+        currentTimeout = null;
+        loopTrack();
+    }, duration * 1000);
 }
 
 let currentTrackName = null;
@@ -208,9 +216,9 @@ export function playBGM(trackName) {
         if (!ctx) return;
 
         if (ctx.state === 'suspended') {
-            ctx.resume().then(() => loopTrack()).catch(() => loopTrack());
+            ctx.resume().then(startLoop).catch(startLoop);
         } else {
-            loopTrack();
+            startLoop();
         }
     };
 
@@ -219,11 +227,7 @@ export function playBGM(trackName) {
 
     if (ctx.state === 'suspended') {
         const unlock = () => {
-            ctx.resume().then(() => {
-                if (isPlaying) loopTrack();
-            }).catch(() => {
-                if (isPlaying) loopTrack();
-            });
+            ctx.resume().then(startLoop).catch(startLoop);
             window.removeEventListener('keydown', unlock);
             window.removeEventListener('mousedown', unlock);
             window.removeEventListener('touchstart', unlock);
@@ -243,6 +247,22 @@ export function playMusic(trackKey) {
     };
     return playBGM(aliases[trackKey] || trackKey);
 }
+
+// Los timers se throttlean con la pestaña oculta: se pausa la música y se retoma al volver
+document.addEventListener("visibilitychange", () => {
+    if (!audioCtx) return;
+    if (document.hidden) {
+        if (currentTimeout) {
+            clearTimeout(currentTimeout);
+            currentTimeout = null;
+        }
+        currentOscillators.forEach(osc => { try { osc.stop(); } catch (e) {} });
+        currentOscillators = [];
+        audioCtx.suspend().catch(() => {});
+    } else {
+        audioCtx.resume().then(startLoop).catch(startLoop);
+    }
+});
 
 export function stopBGM() {
     isPlaying = false;

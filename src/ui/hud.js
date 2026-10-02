@@ -10,7 +10,7 @@ export function createHUD() {
     ]);
 
     hud.add([
-        k.rect(160, 40, { radius: 8 }),
+        k.rect(190, 40, { radius: 8 }),
         k.color(0, 0, 0),
         k.opacity(0.6)
     ]);

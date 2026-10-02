@@ -85,7 +85,7 @@ k.scene("minigame_hospital", async () => {
         k.sprite("player", { anim: "idle_down" }),
         k.pos(k.width() / 2, k.height() - 40),
         k.anchor("center"),
-        k.area({ shape: new k.Rect(k.vec2(0, 0), 20, 20) }),
+        k.area({ shape: new k.Rect(k.vec2(-12, -12), 24, 36) }),
         "player"
     ]);
 
@@ -124,7 +124,7 @@ k.scene("minigame_hospital", async () => {
 
         if (k.isKeyDown("left") || window.virtualInput.left) {
             player.move(-speed, 0);
-            player.flipX = true;
+            player.flipX = false;
             if (player.curAnim() !== "walk_left") player.play("walk_left");
             isMoving = true;
         } else if (k.isKeyDown("right") || window.virtualInput.right) {
@@ -227,7 +227,7 @@ k.scene("minigame_hospital", async () => {
         ]);
 
         k.tween(
-            player.pos,
+            player.pos.clone(),
             k.vec2(k.width() / 2 - 50, k.height() / 2 + 30),
             2,
             (p) => player.pos = p,
@@ -289,7 +289,10 @@ k.scene("minigame_hospital", async () => {
             k.fixed()
         ]);
 
+        let canProceed = false;
+        k.wait(1, () => { canProceed = true; });
         const proceed = () => {
+            if (!canProceed) return;
             waitForSpace.cancel();
             if (waitForClick) waitForClick.cancel();
             import("../state/gameState.js").then(({ gameState }) => {

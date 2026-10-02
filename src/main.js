@@ -12,14 +12,20 @@ import "./scenes/credits.js";
 // Arrancamos el juego directamente en la casa (intro)
 import { initGraphicsCache } from "./utils/textureCache.js";
 
+const loadImage = (src) => new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`No se pudo cargar ${src}`));
+    img.src = src;
+});
+
 async function start() {
     await initGraphicsCache();
 
     // Cargar spritesheet del jugador
-    await new Promise((resolve) => {
-        const img = new Image();
-        img.src = "./img/character-spritesheet.png";
-        img.onload = async () => {
+    {
+        const img = await loadImage("./img/character-spritesheet.png");
+        {
             const exactRows = img.height / 64;
             await k.loadSprite("player", img.src, {
                 sliceX: 13,
@@ -35,20 +41,12 @@ async function start() {
                     walk_right: { from: 144, to: 151, loop: true, speed: 12 },
                 }
             });
-            resolve();
-        };
-    });
+        }
+    }
 
     // Gatos: la hoja tiene celdas de 32x32 (col, fila). Se recorta la celda y se
     // ajusta al bounding box del gato para que el área de colisión quede justa.
     const CAT_CELL = 32;
-    const loadImage = (src) => new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = src;
-    });
-
     const extractCat = (name, img, col, row) => {
         const cell = document.createElement("canvas");
         cell.width = cell.height = CAT_CELL;
@@ -102,4 +100,11 @@ async function start() {
 
     k.go("device_select");
 }
-start();
+
+start().catch((err) => {
+    console.error(err);
+    const msg = document.createElement("div");
+    msg.textContent = "Ups, el juego no pudo cargar. Recarga la página.";
+    msg.style.cssText = "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#111;color:#f0ebd7;font:18px sans-serif;text-align:center;padding:24px;z-index:10001";
+    document.body.appendChild(msg);
+});

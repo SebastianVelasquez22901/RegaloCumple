@@ -1,23 +1,11 @@
 import { k } from "../kaplayCtx.js";
+import { initAudio as getAudioCtx } from "../utils/audio.js";
 
 export let isDialogueActive = false;
 
-// Audio context para el "Animalese"
-const AudioContext = window.AudioContext || window.webkitAudioContext;
-let audioCtx;
-
-function initAudio() {
-    if (!audioCtx) {
-        audioCtx = new AudioContext();
-    }
-    // Reanudar el contexto si estaba suspendido (política de navegadores)
-    if (audioCtx.state === "suspended") {
-        audioCtx.resume();
-    }
-}
-
-// Reproduce un "blip" procedimental
+// Reproduce un "blip" procedimental (usa el AudioContext compartido de audio.js)
 function playBlip(char) {
+    const audioCtx = getAudioCtx();
     if (!audioCtx) return;
     
     // Ignorar espacios y puntuación
@@ -56,7 +44,7 @@ export function startDialogue(lines, onComplete = () => {}) {
     isDialogueActive = true;
     globalThis.isDialogueActive = true;
     
-    initAudio(); 
+    getAudioCtx();
 
     let currentLineIndex = 0;
     let currentCharIndex = 0;
@@ -171,8 +159,12 @@ export function startDialogue(lines, onComplete = () => {}) {
         });
     }
 
+    let lastAdvance = 0;
     const nextLineAction = () => {
         if (!canProgress) return;
+        const now = performance.now();
+        if (now - lastAdvance < 150) return;
+        lastAdvance = now;
         if (isTyping) {
             skipTyping();
         } else {

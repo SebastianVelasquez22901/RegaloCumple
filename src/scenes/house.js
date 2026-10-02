@@ -77,7 +77,7 @@ k.scene("house", (args = {}) => {
     k.add([k.rect(48, 16, { radius: 2 }), k.color(150, 130, 110), k.pos(MAP_W/2, MAP_H - 12), k.anchor("center"), k.z(2)]);
     
     k.add([
-        k.rect(56, 16), k.pos(MAP_W/2, MAP_H - 8), k.anchor("center"), k.area(), k.z(3), "exit_door"
+        k.rect(56, 16), k.color(130, 80, 50), k.pos(MAP_W/2, MAP_H - 8), k.anchor("center"), k.area(), k.z(3), "exit_door"
     ]);
     
     // Control de estado para salir

@@ -88,5 +88,16 @@ k.scene("credits", () => {
             k.anchor("center"),
             k.color(220, 150, 80)
         ]);
+
+        k.wait(3, () => {
+            k.add([
+                k.text(`[ ${window.isMobileMode ? "Toca la pantalla" : "Presiona ESPACIO"} para volver a jugar ]`, { size: 12 }),
+                k.pos(k.width() / 2, k.height() - 30),
+                k.anchor("center"),
+                k.color(150, 110, 80)
+            ]);
+            k.onKeyPress("space", () => location.reload());
+            k.onMousePress(() => location.reload());
+        });
     }
 });
