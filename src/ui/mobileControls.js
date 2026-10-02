@@ -100,15 +100,77 @@ export function setupMobileControls() {
     const dh = k.height();
 
     // D-Pad (Esquina inferior izquierda)
-    const padX = 78;
-    const padY = dh - 78;
-    const step = 42;
-    const sz = 38;
+    const baseX = 90;
+    const baseY = dh - 90;
+    const baseR = 44;
+    const knobR = 18;
+    const grabR = 85;
+    const deadzone = 0.3;
 
-    createBtn(padX, padY - step, sz, sz, "up", "▲");
-    createBtn(padX, padY + step, sz, sz, "down", "▼");
-    createBtn(padX - step, padY, sz, sz, "left", "◄");
-    createBtn(padX + step, padY, sz, sz, "right", "►");
+    const joyBase = currentMobileControls.add([
+        k.circle(baseR),
+        k.pos(baseX, baseY),
+        k.anchor("center"),
+        k.color(20, 20, 30),
+        k.opacity(0.35),
+        k.outline(2, k.rgb(255, 215, 0))
+    ]);
+    const knob = currentMobileControls.add([
+        k.circle(knobR),
+        k.pos(baseX, baseY),
+        k.anchor("center"),
+        k.color(255, 215, 0),
+        k.opacity(0.55),
+        k.z(1)
+    ]);
+
+    let joyTouch = null;
+    const setDir = (l, r, u, d) => {
+        const v = window.virtualInput;
+        v.left = l; v.right = r; v.up = u; v.down = d;
+    };
+    const resetJoy = () => {
+        joyTouch = null;
+        knob.pos = k.vec2(baseX, baseY);
+        knob.opacity = 0.55;
+        joyBase.opacity = 0.35;
+        setDir(false, false, false, false);
+    };
+    const moveJoy = (pos) => {
+        let dx = pos.x - baseX;
+        let dy = pos.y - baseY;
+        const len = Math.hypot(dx, dy);
+        if (len > baseR) {
+            dx = (dx / len) * baseR;
+            dy = (dy / len) * baseR;
+        }
+        knob.pos = k.vec2(baseX + dx, baseY + dy);
+        const nx = dx / baseR;
+        const ny = dy / baseR;
+        setDir(nx < -deadzone, nx > deadzone, ny < -deadzone, ny > deadzone);
+    };
+
+    const joyEvents = [
+        k.onTouchStart((id, pos) => {
+            if (joyTouch !== null || currentMobileControls.hidden) return;
+            if (pos.dist(k.vec2(baseX, baseY)) <= grabR) {
+                joyTouch = id;
+                knob.opacity = 0.85;
+                joyBase.opacity = 0.5;
+                moveJoy(pos);
+            }
+        }),
+        k.onTouchMove((id, pos) => {
+            if (id === joyTouch) moveJoy(pos);
+        }),
+        k.onTouchEnd((id) => {
+            if (id === joyTouch) resetJoy();
+        })
+    ];
+    currentMobileControls.onDestroy(() => {
+        joyEvents.forEach((e) => e.cancel());
+        resetJoy();
+    });
 
     // Botones de Acción (Esquina inferior derecha)
     const actX = dw - 70;
@@ -120,6 +182,7 @@ export function setupMobileControls() {
     // Permitir ocultar/mostrar programáticamente (útil en cinemáticas)
     currentMobileControls.onUpdate(() => {
         if (globalThis.isCinematic || globalThis.isDialogueActive) {
+            if (!currentMobileControls.hidden) resetJoy();
             currentMobileControls.hidden = true;
         } else {
             currentMobileControls.hidden = false;
